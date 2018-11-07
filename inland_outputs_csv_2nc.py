@@ -151,14 +151,11 @@ def write2netCDF(moutput, site, outfilename):
 
 		print "Writing "+i+" data to file..."
 
-		j=0
-		while j<len(time):
-			dataout[j,0,0] = moutput[i][j]
-			j+=1		
-
+		dataout[:,0,0] = moutput[i][:]
+		
 		# min/max values
-		dataout.actual_min = min(dataout[:,0,0])
-		dataout.actual_max = max(dataout[:,0,0])
+		dataout.actual_min = np.min(dataout[:,0,0])
+		dataout.actual_max = np.max(dataout[:,0,0])
 
 	data.close()
 	print "***SUCCESS writing to file***"	
