@@ -48,10 +48,26 @@ site_dates = {"BAN": [dt.date(2004, 1, 2), 1033], "FNS": [dt.date(1999, 1, 2), 1
 "TAM05": [dt.date(2005, 1, 1), 4383], "TAM06": [dt.date(2005, 1, 1), 4383], "NVX": [dt.date(2005, 1, 1), 4383]}
 
 # start date and number of daily time steps for lba obs files - CARBON
-site_dates_lba = {"BAN": [dt.date(2004, 1, 1), 1096], "FNS": [dt.date(1999, 1, 1), 1096], "K34": [dt.date(2003, 1, 1), 1461], "K67": [dt.date(2002, 1, 2), 685],\
-"K77": [dt.date(2001, 1, 2), 1824], "K83": [dt.date(2001, 1, 2), 952], "PDG": [dt.date(2002, 1, 2), 728], "RJA": [dt.date(2000, 2, 3), 953],\
-"CAX04": [dt.date(2005, 1, 1), 4383], "CAX06": [dt.date(2005, 1, 1), 4383], "KEN01": [dt.date(2005, 1, 1), 4383], "KEN02": [dt.date(2005, 1, 1), 4383],\
-"TAM05": [dt.date(2005, 1, 1), 4383], "TAM06": [dt.date(2005, 1, 1), 4383], "NVX": [dt.date(2005, 1, 1), 4383]}
+site_dates_lba = {
+"BAN": [dt.date(2004, 1, 1), 1096],
+"FNS": [dt.date(1999, 1, 1), 1096],
+"K34": [dt.date(2003, 1, 1), 1461],
+"K67": [dt.date(2001, 12, 31), 1462],
+"K77": [dt.date(2001, 1, 1), 1826],
+"K83": [dt.date(2001, 1, 1), 1095],
+"PDG": [dt.date(2002, 1, 1, 730],
+"RJA": [dt.date(2000, 1, 1), 1096],
+"CAX": [dt.date(1999, 1, 1), 731]}
+
+""" Not present in LBA OBS:
+"CAX04": [dt.date(2005, 1, 1), 4383],
+"CAX06": [dt.date(2005, 1, 1), 4383],
+"KEN01": [dt.date(2005, 1, 1), 4383],
+"KEN02": [dt.date(2005, 1, 1), 4383],
+"TAM05": [dt.date(2005, 1, 1), 4383],
+"TAM06": [dt.date(2005, 1, 1), 4383],
+"NVX": [dt.date(2005, 1, 1), 4383]}
+"""
 
 if met_data=="local":
 	path2csv="/exports/csce/datastore/geos/groups/gcel/MEMBRANE_database/model_outputs/INLAND/site_runs/met/local/csv"
