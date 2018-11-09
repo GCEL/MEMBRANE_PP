@@ -29,7 +29,11 @@ from dateutil.relativedelta import relativedelta
 sites=["BAN","FNS"] # EDIT THIS, add site names to this array
 
 # Met data can be local (LBA, GEM) or global (CRUJRA)
-met_data="local"
+#met_data="local"
+met_data=None
+
+# Can be lba or gem
+obs_data="lba"
 
 # site: [lat, lon]
 sitelocs = {"CAX04": [-1.716, -51.457], "CAX06": [-1.737, -51.462], "KEN01": [-16.016, -62.730], "KEN02": [-16.016, -62.730],
@@ -43,17 +47,51 @@ site_dates = {"BAN": [dt.date(2004, 1, 2), 1033], "FNS": [dt.date(1999, 1, 2), 1
 "CAX04": [dt.date(2005, 1, 1), 4383], "CAX06": [dt.date(2005, 1, 1), 4383], "KEN01": [dt.date(2005, 1, 1), 4383], "KEN02": [dt.date(2005, 1, 1), 4383],\
 "TAM05": [dt.date(2005, 1, 1), 4383], "TAM06": [dt.date(2005, 1, 1), 4383], "NVX": [dt.date(2005, 1, 1), 4383]}
 
+# start date and number of daily time steps for lba obs files - CARBON
+site_dates_lba = {"BAN": [dt.date(2004, 1, 1), 1096], "FNS": [dt.date(1999, 1, 1), 1096], "K34": [dt.date(2003, 1, 1), 1461], "K67": [dt.date(2002, 1, 2), 685],\
+"K77": [dt.date(2001, 1, 2), 1824], "K83": [dt.date(2001, 1, 2), 952], "PDG": [dt.date(2002, 1, 2), 728], "RJA": [dt.date(2000, 2, 3), 953],\
+"CAX04": [dt.date(2005, 1, 1), 4383], "CAX06": [dt.date(2005, 1, 1), 4383], "KEN01": [dt.date(2005, 1, 1), 4383], "KEN02": [dt.date(2005, 1, 1), 4383],\
+"TAM05": [dt.date(2005, 1, 1), 4383], "TAM06": [dt.date(2005, 1, 1), 4383], "NVX": [dt.date(2005, 1, 1), 4383]}
+
 if met_data=="local":
 	path2csv="/exports/csce/datastore/geos/groups/gcel/MEMBRANE_database/model_outputs/INLAND/site_runs/met/local/csv"
 	path2nc="/exports/csce/datastore/geos/groups/gcel/MEMBRANE_database/model_outputs/INLAND/site_runs/met/local/nc"
 elif met_data=="global":
 	path2csv="/exports/csce/datastore/geos/groups/gcel/MEMBRANE_database/model_outputs/INLAND/site_runs/met/global/csv"
 	path2nc="/exports/csce/datastore/geos/groups/gcel/MEMBRANE_database/model_outputs/INLAND/site_runs/met/global/nc"
+else:
+    print "Not processing model data..."
+
+if obs_data=="lba":
+    path2csv="/exports/csce/datastore/geos/groups/gcel/MEMBRANE_database/lba_obs/"
+    path2nc="/exports/csce/datastore/geos/groups/gcel/MEMBRANE_database/lba_obs/nc/"
+elif obs_data="gem":
+    path2csv=="/exports/csce/datastore/geos/groups/gcel/MEMBRANE_database/GEM_Sophie/"
+    # special case here:
+
 
 # inland output variables
 out_vars = ["swnet", "lwnet", "qle", "qh", "qg"] # EDIT THIS, add variable names, name them as you like
 
 ##########################################################################################################
+
+def generate_dates_from_lba_obs_csv(dataframe_lba_obs_file):
+    """
+    Generates a dictionary of sites:datetime.date objects from the LBA site csv file.
+
+    Input:
+        Pandas data frame with a single lba obs site loaded.
+
+    Return:
+        Dictionary of the sites:datetime.date objects
+    """
+    df = dataframe_lba_obs_file
+    # Each dt.date object needs a start year, month and day
+    # TODOsite_code = df.
+    #TODOstart_year
+    
+
+
 def extract_csv_data(filename,site):
 
 	print "#############################################################################################"
@@ -77,6 +115,61 @@ def extract_csv_data(filename,site):
 	###########################################################################################
 
 	return inland_data
+
+def extract_carbon_lba_obs_csv(filename, site):
+    print "##############################################"
+    print "Extracting LBS OBS data from csv file at " + site
+
+    CARBON_HEADERS = ["Year_LBAMIP","DoY_LBAMIP","Hour_LBAMIP","NEE","NEEf","NEE_model","Re_5day_ust_Sco2_LUT","GEP_model","par_fill","VPD","mrs"]
+
+    import pandas as pd
+    carbon_lba_obs_df = pd.read_csv(filename, delimiter=',', header=None, names=CARBON_HEADERS)
+    return carbon_lba_obs_df
+
+def write_lba_obs_netcdf(obs_output, site, outfilename):
+
+    print "Writing LBA OBS output to netcdf with relevant metadata/attributes"
+
+    data = Dataset(outfilename, 'w', format='NETCDF4')
+
+    lats = sitelocs[site][0]]
+    lons = sitelocs[site][1]]
+	
+	latdim=data.createDimension('lat', len(lats))
+	londim=data.createDimension('lon', len(lons))
+	tdim=data.createDimension('time', None) # record, or unlimited dimension
+		
+	# variables
+	latitudes=data.createVariable('lat', 'f4', ('lat',))
+	longitudes=data.createVariable('lon', 'f4', ('lon',))
+	time=data.createVariable('time', np.float64, ('time',))
+
+	latitudes.units = 'degrees_north'
+	longitudes.units = 'degrees_east'
+
+	latitudes.title = 'Latitude'
+	longitudes.title = 'Longitude'
+
+	latitudes.actual_min = min(lats)
+	latitudes.actual_max = max(lats)
+
+	longitudes.actual_min = min(lons)
+	longitudes.actual_max = max(lons)
+
+	latitudes[:] = lats
+	longitudes[:] = lons
+
+	print "Creating metadata"
+
+	# add values to time variable
+	times = [datetime.datetime.combine(site_dates[site][0], datetime.time()) + datetime.timedelta(hours=hour) for hour in range(site_dates[site][1]*24)]
+	 
+    	time.units = 'hours since 1850-01-01 00:00:00.0'
+    	time.calendar = 'gregorian'
+	time[:] = date2num(times, time.units, calendar=time.calendar)
+
+	print "Writing data to file for "+str(len(lats))+" point(s)"
+
 
 
 def write2netCDF(moutput, site, outfilename):
