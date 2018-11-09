@@ -55,7 +55,7 @@ site_dates_lba = {
 "K67": [dt.date(2001, 12, 31), 1462],
 "K77": [dt.date(2001, 1, 1), 1826],
 "K83": [dt.date(2001, 1, 1), 1095],
-"PDG": [dt.date(2002, 1, 1, 730],
+"PDG": [dt.date(2002, 1, 1), 730],
 "RJA": [dt.date(2000, 1, 1), 1096],
 "CAX": [dt.date(1999, 1, 1), 731]}
 
@@ -81,13 +81,16 @@ else:
 if obs_data=="lba":
     path2csv="/exports/csce/datastore/geos/groups/gcel/MEMBRANE_database/lba_obs/"
     path2nc="/exports/csce/datastore/geos/groups/gcel/MEMBRANE_database/lba_obs/nc/"
-elif obs_data="gem":
+elif obs_data=="gem":
     path2csv=="/exports/csce/datastore/geos/groups/gcel/MEMBRANE_database/GEM_Sophie/"
     # special case here:
 
 
 # inland output variables
 out_vars = ["swnet", "lwnet", "qle", "qh", "qg"] # EDIT THIS, add variable names, name them as you like
+
+lba_obs_out_vars = ["NEE","NEEf","NEE_model","Re_5day_ust_Sco2_LUT","gpp_gb","par_fill","VPD","mrs"]
+#lba_obs_out_vars = [
 
 ##########################################################################################################
 
@@ -106,7 +109,6 @@ def generate_dates_from_lba_obs_csv(dataframe_lba_obs_file):
     # TODOsite_code = df.
     #TODOstart_year
     
-
 
 def extract_csv_data(filename,site):
 
@@ -133,6 +135,9 @@ def extract_csv_data(filename,site):
 	return inland_data
 
 def extract_carbon_lba_obs_csv(filename, site):
+    """
+    Takes a filename of a csv file for lba obs data and returns the file as a pandas dataframe.
+    """
     print "##############################################"
     print "Extracting LBS OBS data from csv file at " + site
 
@@ -143,49 +148,74 @@ def extract_carbon_lba_obs_csv(filename, site):
     return carbon_lba_obs_df
 
 def write_lba_obs_netcdf(obs_output, site, outfilename):
+    """
+    Takes a pandas dataframe with the obs data a writes it to netcdf, for a given site
+    """
 
     print "Writing LBA OBS output to netcdf with relevant metadata/attributes"
 
     data = Dataset(outfilename, 'w', format='NETCDF4')
 
-    lats = sitelocs[site][0]]
-    lons = sitelocs[site][1]]
+    lats = [sitelocs[site][0]]
+    lons = [sitelocs[site][1]]
+
+    latdim=data.createDimension('lat', len(lats))
+    londim=data.createDimension('lon', len(lons))
+    tdim=data.createDimension('time', None) # record, or unlimited dimension
 	
-	latdim=data.createDimension('lat', len(lats))
-	londim=data.createDimension('lon', len(lons))
-	tdim=data.createDimension('time', None) # record, or unlimited dimension
-		
 	# variables
-	latitudes=data.createVariable('lat', 'f4', ('lat',))
-	longitudes=data.createVariable('lon', 'f4', ('lon',))
-	time=data.createVariable('time', np.float64, ('time',))
+    latitudes=data.createVariable('lat', 'f4', ('lat',))
+    longitudes=data.createVariable('lon', 'f4', ('lon',))
+    time=data.createVariable('time', np.float64, ('time',))
 
-	latitudes.units = 'degrees_north'
-	longitudes.units = 'degrees_east'
+    latitudes.units = 'degrees_north'
+    longitudes.units = 'degrees_east'
 
-	latitudes.title = 'Latitude'
-	longitudes.title = 'Longitude'
+    latitudes.title = 'Latitude'
+    longitudes.title = 'Longitude'
 
-	latitudes.actual_min = min(lats)
-	latitudes.actual_max = max(lats)
+    latitudes.actual_min = min(lats)
+    latitudes.actual_max = max(lats)
 
-	longitudes.actual_min = min(lons)
-	longitudes.actual_max = max(lons)
+    longitudes.actual_min = min(lons)
+    longitudes.actual_max = max(lons)
 
-	latitudes[:] = lats
-	longitudes[:] = lons
+    latitudes[:] = lats
+    longitudes[:] = lons
 
-	print "Creating metadata"
+    print "Creating metadata"
 
-	# add values to time variable
-	times = [datetime.datetime.combine(site_dates[site][0], datetime.time()) + datetime.timedelta(hours=hour) for hour in range(site_dates[site][1]*24)]
-	 
-    	time.units = 'hours since 1850-01-01 00:00:00.0'
-    	time.calendar = 'gregorian'
-	time[:] = date2num(times, time.units, calendar=time.calendar)
+    # add values to time variable
+    times = [datetime.datetime.combine(site_dates[site][0], datetime.time()) + datetime.timedelta(hours=hour) for hour in range(site_dates[site][1]*24)]
+ 
+    time.units = 'hours since 1850-01-01 00:00:00.0'
+    time.calendar = 'gregorian'
+    time[:] = date2num(times, time.units, calendar=time.calendar)
 
-	print "Writing data to file for "+str(len(lats))+" point(s)"
+    print "Writing data to file for "+str(len(lats))+" point(s)"
 
+    for i in lba_obs_out_vars:
+        print "Creating netcdf variable: " + i
+        dataout=data.createVariable(i, 'f4', ('time', 'lat', 'lon',),fill_value=np.nan)
+
+		# EDIT THIS, add metadata for other variables here
+        if i=="gpp_gb":	
+            dataout.units = "gC.m-2.day-1"
+            dataout.long_name = "Gridbox GPP"
+            dataout.title = "GPP_GB"
+        else:
+            print "No data variables to write...? \n Check your netcdf file"
+
+        print "Writing "+i+" data to file..."
+
+        dataout[:,0,0] = obs_output[i][:]
+		
+        # min/max values
+        dataout.actual_min = np.min(dataout[:,0,0])
+        dataout.actual_max = np.max(dataout[:,0,0])
+
+    data.close()
+    print "***SUCCESS writing to file***"	
 
 
 def write2netCDF(moutput, site, outfilename):
@@ -271,12 +301,18 @@ def write2netCDF(moutput, site, outfilename):
 
 ##########################################################################################################
 # extract data from all sites and write to netcdf
-for i in sites:
-	inland_outputs = extract_csv_data(path2csv+"/"+i+"-single_point-output.csv",i)
-	
-	outfile=path2nc+"/"+i+"-single_point-output_hourly.nc"
+for site in sites:
 
-	write2netCDF(inland_outputs,i,outfile)
+    print "PROCESSING SITE: " + site
+    # Extract the data from the site csv
+	#inland_outputs = extract_csv_data(path2csv+"/"+i+"-single_point-output.csv",i)
+    lba_obs_outputs = extract_carbon_lba_obs_csv(path2csv+"/" + site + "day-carbon.dat", site)
+	
+    # Concatenate an output file csv
+    outfile = path2nc+"/"+site+"-carbon_LBA_site_point.nc"
+
+    # Write the variable to netcdf format
+    write_lba_obs_netcdf(lba_obs_outputs, site, outfile)
 
 ##########################################################################################################
 
