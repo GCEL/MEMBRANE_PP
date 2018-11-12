@@ -26,7 +26,7 @@ from dateutil.relativedelta import relativedelta
 ##########################################################################################################
 # add sites to this array for model runs
 #sites=["BAN", "FNS", "K34", "K67", "K77", "K83", "PDG", "RJA", "CAX04", "CAX06", "KEN01", "KEN02", "TAM05", "TAM06", "NVX"]
-sites=["BAN","FNS"] # EDIT THIS, add site names to this array
+sites=["BAN","FNS","CAX","K34","K67","K77","K83","PDG","RJA"] # EDIT THIS, add site names to this array
 
 # Met data can be local (LBA, GEM) or global (CRUJRA)
 #met_data="local"
@@ -39,13 +39,18 @@ obs_data="lba"
 sitelocs = {"CAX04": [-1.716, -51.457], "CAX06": [-1.737, -51.462], "KEN01": [-16.016, -62.730], "KEN02": [-16.016, -62.730],
 "TAM05": [-12.831, -69.271], "TAM06": [-12.839, -69.296], "NVX": [-14.70, -52.35], "BAN": [-9.82, -50.15], "FNS": [-10.76, -62.36],
 "K34": [-2.61, -60.21], "K67": [-2.85, -54.97], "K77": [-3.01, -54.54], "K83": [-3.05, -54.93],
-"PDG": [-21.62, -47.63], "RJA": [-10.08, -62.36]}
+"PDG": [-21.62, -47.63], "RJA": [-10.08, -62.36], "CAX": [-1.748, -51.454]}
+
+# Note on CAX - lat lon taken from the site info from the LCB dataset:
+# file:///exports/csce/datastore/geos/groups/gcel/MEMBRANE_database/FLUX_LBA_ECO/CD32_BRAZIL_FLUX_NETWORK_1174/guide/CD32_Brazil_Flux_Network.html
 
 # start date and number of daily time steps
 site_dates = {"BAN": [dt.date(2004, 1, 2), 1033], "FNS": [dt.date(1999, 1, 2), 1094], "K34": [dt.date(2003, 1, 2), 1017], "K67": [dt.date(2002, 1, 2), 685],\
-"K77": [dt.date(2001, 1, 2), 1824], "K83": [dt.date(2001, 1, 2), 952], "PDG": [dt.date(2002, 1, 2), 728], "RJA": [dt.date(2000, 2, 3), 953],\
+"K77": [dt.date(2001, 1, 2), 1824], "K83": [dt.date(2001, 1, 2), 952], "PDG": [dt.date(2002, 1, 2), 728], "RJA": [dt.date(2000, 2, 3), 953], "CAX": [dt.date(1999, 1 , 1), 731],\
 "CAX04": [dt.date(2005, 1, 1), 4383], "CAX06": [dt.date(2005, 1, 1), 4383], "KEN01": [dt.date(2005, 1, 1), 4383], "KEN02": [dt.date(2005, 1, 1), 4383],\
 "TAM05": [dt.date(2005, 1, 1), 4383], "TAM06": [dt.date(2005, 1, 1), 4383], "NVX": [dt.date(2005, 1, 1), 4383]}
+
+# Note on CAX - additional dataset from met office only has one location, not CAX06 and CAX04
 
 # start date and number of daily time steps for lba obs files - CARBON
 site_dates_lba = {
@@ -109,31 +114,6 @@ def generate_dates_from_lba_obs_csv(dataframe_lba_obs_file):
     # TODOsite_code = df.
     #TODOstart_year
     
-
-def extract_csv_data(filename,site):
-
-	print "#############################################################################################"
-	print "Extracting INLAND data from csv file at "+site
-
-	# store data in a dictionary
-	inland_data = {}
-
-	data = np.loadtxt(filename, skiprows=1, dtype=np.str)
-	
-	###########################################################################################
-	# EDIT THIS
-	# The column number (starting at 0) is used to extract data from the data array. 	
-	###########################################################################################
-	inland_data["swnet"] = np.array([float(x) for x in data[:,3]])
-	inland_data["lwnet"] = np.array([float(x) for x in data[:,4]])
-	inland_data["qle"] = np.array([float(x) for x in data[:,5]])
-	inland_data["qh"] = np.array([float(x) for x in data[:,6]])
-	inland_data["qg"] = np.array([float(x) for x in data[:,7]])
-
-	###########################################################################################
-
-	return inland_data
-
 def extract_carbon_lba_obs_csv(filename, site):
     """
     Takes a filename of a csv file for lba obs data and returns the file as a pandas dataframe.
