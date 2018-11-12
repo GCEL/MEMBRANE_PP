@@ -90,7 +90,7 @@ elif obs_data=="gem":
 out_vars = ["swnet", "lwnet", "qle", "qh", "qg"] # EDIT THIS, add variable names, name them as you like
 
 lba_obs_out_vars = ["NEE","NEEf","NEE_model","Re_5day_ust_Sco2_LUT","gpp_gb","par_fill","VPD","mrs"]
-#lba_obs_out_vars = [
+lba_obs_in_vars = ["NEE","NEEf","NEE_model","Re_5day_ust_Sco2_LUT","GEP_model","par_fill","VPD","mrs"]
 
 ##########################################################################################################
 
@@ -194,21 +194,22 @@ def write_lba_obs_netcdf(obs_output, site, outfilename):
 
     print "Writing data to file for "+str(len(lats))+" point(s)"
 
-    for i in lba_obs_out_vars:
-        print "Creating netcdf variable: " + i
-        dataout=data.createVariable(i, 'f4', ('time', 'lat', 'lon',),fill_value=np.nan)
+    for in_var in lba_obs_in_vars:
+        print "Creating netcdf variable: " + in_var
+        dataout=data.createVariable(in_var, 'f4', ('time', 'lat', 'lon',),fill_value=np.nan)
 
 		# EDIT THIS, add metadata for other variables here
-        if i=="gpp_gb":	
+        if in_var=="GEP_model":  # GPP_GB alias	
             dataout.units = "gC.m-2.day-1"
             dataout.long_name = "Gridbox GPP"
             dataout.title = "GPP_GB"
         else:
             print "No data variables to write...? \n Check your netcdf file"
 
-        print "Writing "+i+" data to file..."
+        print "Writing "+ in_var +" data to file..."
+        print obs_output[in_var]
+        dataout[:,0,0] = obs_output[in_var].values
 
-        dataout[:,0,0] = obs_output[i][:]
 		
         # min/max values
         dataout.actual_min = np.min(dataout[:,0,0])
@@ -307,6 +308,9 @@ for site in sites:
     # Extract the data from the site csv
 	#inland_outputs = extract_csv_data(path2csv+"/"+i+"-single_point-output.csv",i)
     lba_obs_outputs = extract_carbon_lba_obs_csv(path2csv+"/" + site + "day-carbon.dat", site)
+
+    print "LBA OBS dataframe summary:"
+    print lba_obs_outputs
 	
     # Concatenate an output file csv
     outfile = path2nc+"/"+site+"-carbon_LBA_site_point.nc"
