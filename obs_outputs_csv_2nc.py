@@ -28,10 +28,6 @@ from dateutil.relativedelta import relativedelta
 #sites=["BAN", "FNS", "K34", "K67", "K77", "K83", "PDG", "RJA", "CAX04", "CAX06", "KEN01", "KEN02", "TAM05", "TAM06", "NVX"]
 sites=["BAN","FNS","CAX","K34","K67","K77","K83","PDG","RJA"] # EDIT THIS, add site names to this array
 
-# Met data can be local (LBA, GEM) or global (CRUJRA)
-#met_data="local"
-met_data=None
-
 # Can be lba or gem
 obs_data="lba"
 
@@ -74,15 +70,6 @@ site_dates_lba = {
 "NVX": [dt.date(2005, 1, 1), 4383]}
 """
 
-if met_data=="local":
-	path2csv="/exports/csce/datastore/geos/groups/gcel/MEMBRANE_database/model_outputs/INLAND/site_runs/met/local/csv"
-	path2nc="/exports/csce/datastore/geos/groups/gcel/MEMBRANE_database/model_outputs/INLAND/site_runs/met/local/nc"
-elif met_data=="global":
-	path2csv="/exports/csce/datastore/geos/groups/gcel/MEMBRANE_database/model_outputs/INLAND/site_runs/met/global/csv"
-	path2nc="/exports/csce/datastore/geos/groups/gcel/MEMBRANE_database/model_outputs/INLAND/site_runs/met/global/nc"
-else:
-    print "Not processing model data..."
-
 if obs_data=="lba":
     path2csv="/exports/csce/datastore/geos/groups/gcel/MEMBRANE_database/lba_obs/"
     path2nc="/exports/csce/datastore/geos/groups/gcel/MEMBRANE_database/lba_obs/nc/"
@@ -101,6 +88,8 @@ lba_obs_in_vars = ["NEE","NEEf","NEE_model","Re_5day_ust_Sco2_LUT","GEP_model","
 
 def generate_dates_from_lba_obs_csv(dataframe_lba_obs_file):
     """
+    TODO: (CURRENTLY DONE MANUALLY ABOVE)
+
     Generates a dictionary of sites:datetime.date objects from the LBA site csv file.
 
     Input:
@@ -197,88 +186,6 @@ def write_lba_obs_netcdf(obs_output, site, outfilename):
 
     data.close()
     print "***SUCCESS writing to file***"	
-
-
-def write2netCDF(moutput, site, outfilename):
-
-	print "Writing INLAND output (with metadata, evaluation tool, ILAMB, ready) to file"
-	
-	data = Dataset(outfilename, 'w', format='NETCDF4')
-	
-	lats = [sitelocs[site][0]]
-	lons = [sitelocs[site][1]]
-	
-	latdim=data.createDimension('lat', len(lats))
-	londim=data.createDimension('lon', len(lons))
-	tdim=data.createDimension('time', None) # record, or unlimited dimension
-		
-	# variables
-	latitudes=data.createVariable('lat', 'f4', ('lat',))
-	longitudes=data.createVariable('lon', 'f4', ('lon',))
-	time=data.createVariable('time', np.float64, ('time',))
-
-	latitudes.units = 'degrees_north'
-	longitudes.units = 'degrees_east'
-
-	latitudes.title = 'Latitude'
-	longitudes.title = 'Longitude'
-
-	latitudes.actual_min = min(lats)
-	latitudes.actual_max = max(lats)
-
-	longitudes.actual_min = min(lons)
-	longitudes.actual_max = max(lons)
-
-	latitudes[:] = lats
-	longitudes[:] = lons
-
-	print "Creating metadata"
-
-	# add values to time variable
-	times = [datetime.datetime.combine(site_dates[site][0], datetime.time()) + datetime.timedelta(hours=hour) for hour in range(site_dates[site][1]*24)]
-	 
-    	time.units = 'hours since 1850-01-01 00:00:00.0'
-    	time.calendar = 'gregorian'
-	time[:] = date2num(times, time.units, calendar=time.calendar)
-
-	print "Writing data to file for "+str(len(lats))+" point(s)"
-
-	for i in out_vars:
-
-		dataout=data.createVariable(i, 'f4', ('time', 'lat', 'lon',),fill_value=np.nan)
-
-		# EDIT THIS, add metadata for other variables here
-		if i=="swnet":	
-			dataout.units = "W.m-2"
-			dataout.long_name = "Net shortwave radiation"
-			dataout.title = "SWnet"
-		elif i=="lwnet":	
-			dataout.units = "W.m-2"
-			dataout.long_name = "Net longwave radiation"
-			dataout.title = "LWnet"
-		elif i=="qle":	
-			dataout.units = "W.m-2"
-			dataout.long_name = "Latent heat"
-			dataout.title = "Qle"
-		elif i=="qh":
-			dataout.units = "W.m-2"
-			dataout.long_name = "Sensible heat" # I don't think this is the correct name, you can change it.
-			dataout.title = "Qh"
-		elif i=="qg":
-			dataout.units = "W.m-2"
-			dataout.long_name = "Sensible heat"
-			dataout.title = "Qg"
-
-		print "Writing "+i+" data to file..."
-
-		dataout[:,0,0] = moutput[i][:]
-		
-		# min/max values
-		dataout.actual_min = np.min(dataout[:,0,0])
-		dataout.actual_max = np.max(dataout[:,0,0])
-
-	data.close()
-	print "***SUCCESS writing to file***"	
 
 ##########################################################################################################
 # extract data from all sites and write to netcdf
