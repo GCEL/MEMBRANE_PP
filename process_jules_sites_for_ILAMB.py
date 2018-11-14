@@ -45,22 +45,22 @@ LBA_sites=["BAN", "FNS", "K34", "K67", "K77", "K83", "PDG", "RJA"]
 
 ##########################################################################################################
 # add sites to this array for model runs
-#sites=["BAN", "K34", "K67", "K83", "RJA"]
-sites=["BAN", "FNS", "K34", "K67", "K77", "K83", "PDG", "RJA", "CAX04", "CAX06", "KEN01", "KEN02", "TAM05", "TAM06", "NVX"]
+sites=["BAN"]
+#sites=["BAN", "FNS", "K34", "K67", "K77", "K83", "PDG", "RJA", "CAX04", "CAX06", "KEN01", "KEN02", "TAM05", "TAM06", "NVX"]
 
 # TRMM, MSWEP
 # only for the GEM sites as there is no local precip data available
 precip_data="MSWEP"
 
 # Met data can be local (LBA, GEM) or global (CRUJRA)
-met_data="local"
+met_data="global"
 
 # model simulation type
 # MET-LOCAL: LBA or GEM met data is used to drive the model.
 # MET-GLOBAL: CRUJRA met data is used to drive the model.
 # LAI: Model runs in which lai is prescribed. Local data used.
 # STHUF: Model runs in which soil moisture (sthuf) is prescribed. Local data used. 
-sim_type="MET-LOCAL"
+sim_type="MET-GLOBAL"
 
 # specifies output folders
 output_type={"MET-GLOBAL": "CRUJRA", "LAI": "PRESC_LAI", "STHUF": "PRESC_STHUF"}
@@ -74,6 +74,8 @@ output_tres={"hourly": "H", "3hourly": "3H", "6hourly": "6H", "daily": "D", "mon
 
 # number of soil layers
 nlayers = 4
+
+path2inputs="/exports/csce/datastore/geos/users/dslevin/jules/5.2/"
 
 ##########################################################################################################
 # site: [lat, lon]
@@ -177,7 +179,7 @@ def extract_data(filename):
 	return jules_data 
 
 
-def write2netCDF(moutput, site, outfilename):
+def write2netCDF(moutput, site, outfilename, tres):
 
 	print "Writing JULES output (with metadata, evaluation tool ready) to file"
 	
@@ -214,11 +216,18 @@ def write2netCDF(moutput, site, outfilename):
 
 	print "Creating metadata"
 
-	# add values to time variable
-	times = [datetime.datetime.combine(site_dates[site][0], datetime.time()) + datetime.timedelta(hours=hour) for hour in range(site_dates[site][1]*24)]
-	 
-    	time.units = 'hours since 1850-01-01 00:00:00.0'
-    	time.calendar = 'gregorian'
+	# extract overlapping data from runs using local and global met data
+	if tres=="daily" and sim_type=="MET-GLOBAL":
+
+
+
+	elif tres=="hourly" and :
+		# add values to time variable
+		times = [datetime.datetime.combine(site_dates[site][0], datetime.time()) + datetime.timedelta(hours=hour) for hour in range(site_dates[site][1]*24)]
+ 	 
+	    	time.units = 'hours since 1850-01-01 00:00:00.0'
+	    	time.calendar = 'gregorian'
+
 	time[:] = date2num(times, time.units, calendar=time.calendar)
 
 	print "Writing data to file for "+str(len(lats))+" point(s)"
@@ -329,11 +338,11 @@ while i<len(sites):
 
 				print "Processing "+sites[i]+" ["+sim_type+", "+tstep+"]"
 
-				infile = "jules_vn5.2_doc/examples/"+sites[i]+"_9PFTS/output/"+sites[i]+"_LBA_DYN."+output_tres[tstep]+".nc"
-				outfile = "jules_vn5.2_doc/examples/"+sites[i]+"_9PFTS/output/"+sites[i]+"_LBA_DYN."+output_tres[tstep]+".pp.nc"
+				infile = path2inputs+"jules_vn5.2_doc/examples/"+sites[i]+"_9PFTS/output/"+sites[i]+"_LBA_DYN."+output_tres[tstep]+".nc"
+				outfile = path2inputs+"jules_vn5.2_doc/examples/"+sites[i]+"_9PFTS/output/"+sites[i]+"_LBA_DYN."+output_tres[tstep]+".pp.nc"
 
 				model_output = extract_data(infile)
-				write2netCDF(model_output,sites[i],outfile)
+				write2netCDF(model_output,sites[i],outfile,tstep)
 
 		elif sites[i] in GEM_sites:
 	
@@ -341,11 +350,11 @@ while i<len(sites):
 
 				print "Processing "+sites[i]+" ["+sim_type+", "+tstep+"]"
 
-				infile = "jules_vn5.2_doc/examples/"+sites[i]+"_"+precip_data+"_9PFTS/output/"+sites[i]+"_GEM_DYN."+output_tres[tstep]+".nc"
-				outfile = "jules_vn5.2_doc/examples/"+sites[i]+"_"+precip_data+"_9PFTS/output/"+sites[i]+"_GEM_DYN."+output_tres[tstep]+".pp.nc"
+				infile = path2inputs+"jules_vn5.2_doc/examples/"+sites[i]+"_"+precip_data+"_9PFTS/output/"+sites[i]+"_GEM_DYN."+output_tres[tstep]+".nc"
+				outfile = path2inputs+"jules_vn5.2_doc/examples/"+sites[i]+"_"+precip_data+"_9PFTS/output/"+sites[i]+"_GEM_DYN."+output_tres[tstep]+".pp.nc"
 
 				model_output = extract_data(infile)
-				write2netCDF(model_output,sites[i],outfile)
+				write2netCDF(model_output,sites[i],outfile,tstep)
 
 	elif sim_type=="MET-GLOBAL":
 			
@@ -353,11 +362,11 @@ while i<len(sites):
 
 			print "Processing "+sites[i]+" ["+sim_type+", "+tstep+"]"
 
-			infile = "jules_vn5.2_doc/examples/"+sites[i]+"_"+output_type[sim_type]+"_9PFTS/output/"+sites[i]+"_CRUJRA_DYN."+output_tres[tstep]+".nc"
-			outfile = "jules_vn5.2_doc/examples/"+sites[i]+"_"+output_type[sim_type]+"_9PFTS/output/"+sites[i]+"_CRUJRA_DYN."+output_tres[tstep]+".pp.nc"		
+			infile = path2inputs+"jules_vn5.2_doc/examples/"+sites[i]+"_"+output_type[sim_type]+"_9PFTS/output/"+sites[i]+"_CRUJRA_DYN."+output_tres[tstep]+".nc"
+			outfile = path2inputs+"jules_vn5.2_doc/examples/"+sites[i]+"_"+output_type[sim_type]+"_9PFTS/output/"+sites[i]+"_CRUJRA_DYN."+output_tres[tstep]+".pp.nc"		
 
 			model_output = extract_data(infile)
-			write2netCDF(model_output,sites[i],outfile)
+			write2netCDF(model_output,sites[i],outfile,tstep)
 	
 	elif sim_type=="LAI" or sim_type=="STHUF":
 		
@@ -367,11 +376,11 @@ while i<len(sites):
 
 				print "Processing "+sites[i]+" ["+sim_type+", "+tstep+"]"
 
-				infile = "jules_vn5.2_doc/examples/"+sites[i]+"_"+output_type[sim_type]+"_9PFTS/output/"+sites[i]+"_LBA_DYN."+output_tres[tstep]+".nc"
-				outfile = "jules_vn5.2_doc/examples/"+sites[i]+"_"+output_type[sim_type]+"_9PFTS/output/"+sites[i]+"_LBA_DYN."+output_tres[tstep]+".pp.nc"
+				infile = path2inputs+"jules_vn5.2_doc/examples/"+sites[i]+"_"+output_type[sim_type]+"_9PFTS/output/"+sites[i]+"_LBA_DYN."+output_tres[tstep]+".nc"
+				outfile = path2inputs+"jules_vn5.2_doc/examples/"+sites[i]+"_"+output_type[sim_type]+"_9PFTS/output/"+sites[i]+"_LBA_DYN."+output_tres[tstep]+".pp.nc"
 
 				model_output = extract_data(infile)
-				write2netCDF(model_output,sites[i],outfile)
+				write2netCDF(model_output,sites[i],outfile,tstep)
 
 		elif sites[i] in GEM_sites:
 
@@ -379,13 +388,12 @@ while i<len(sites):
 
 				print "Processing "+sites[i]+" ["+sim_type+", "+tstep+"]"
 
-				infile = "jules_vn5.2_doc/examples/"+sites[i]+"_"+output_type[sim_type]+"_9PFTS/output/"+sites[i]+"_GEM_DYN."+output_tres[tstep]+".nc"
-				outfile = "jules_vn5.2_doc/examples/"+sites[i]+"_"+output_type[sim_type]+"_9PFTS/output/"+sites[i]+"_GEM_DYN."+output_tres[tstep]+".pp.nc"
+				infile = path2inputs+"jules_vn5.2_doc/examples/"+sites[i]+"_"+output_type[sim_type]+"_9PFTS/output/"+sites[i]+"_GEM_DYN."+output_tres[tstep]+".nc"
+				outfile = path2inputs+"jules_vn5.2_doc/examples/"+sites[i]+"_"+output_type[sim_type]+"_9PFTS/output/"+sites[i]+"_GEM_DYN."+output_tres[tstep]+".pp.nc"
 
 				model_output = extract_data(infile)
-				write2netCDF(model_output,sites[i],outfile)		
-	elif sim_type=="STHUF":
-		print "Processing "+sites[i]+" ["+met_data+"]"
+				write2netCDF(model_output,sites[i],outfile,tstep)		
+	
 
 		
 

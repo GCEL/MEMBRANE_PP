@@ -155,9 +155,13 @@ def write_lba_obs_netcdf(obs_output, site, outfilename):
     print "Creating metadata"
 
     # add values to time variable
-    times = [datetime.datetime.combine(site_dates[site][0], datetime.time()) + datetime.timedelta(hours=hour) for hour in range(site_dates[site][1]*24)]
+
+    # For lba this is daily! (Not hourly)
+    #times = [datetime.datetime.combine(site_dates[site][0], datetime.time()) + datetime.timedelta(hours=hour) for hour in range(site_dates[site][1]*24)]
  
-    time.units = 'hours since 1850-01-01 00:00:00.0'
+    times = [datetime.datetime.combine(site_dates[site][0], datetime.time()) + datetime.timedelta(days=day) for day in range(site_dates[site][1])]
+
+    time.units = 'days since 1850-01-01 00:00:00.0'  # CHECK THIS MATCHES WHAT IS IN YOUR INPUT DATA!
     time.calendar = 'gregorian'
     time[:] = date2num(times, time.units, calendar=time.calendar)
 
@@ -165,11 +169,11 @@ def write_lba_obs_netcdf(obs_output, site, outfilename):
 
     for in_var in lba_obs_in_vars:
         print "Creating netcdf variable: " + in_var
-        dataout=data.createVariable(in_var, 'f4', ('time', 'lat', 'lon',),fill_value=np.nan)
+        dataout=data.createVariable(in_var, 'f4', ('time', 'lat', 'lon',),fill_value=-9999.)
 
 		# EDIT THIS, add metadata for other variables here
         if in_var=="GEP_model":  # GPP_GB alias	
-            dataout.units = "gC.m-2.day-1"
+            dataout.units = "g.m-2.d-1"
             dataout.long_name = "Gridbox GPP"
             dataout.title = "GPP_GB"
         else:
