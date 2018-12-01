@@ -45,7 +45,7 @@ LBA_sites=["BAN", "FNS", "K34", "K67", "K77", "K83", "PDG", "RJA"]
 
 ##########################################################################################################
 # add sites to this array for model runs
-sites=["BAN"]
+sites=["BAN", "FNS", "K34", "K67", "K77", "K83", "PDG", "RJA", "CAX04", "CAX06", "KEN01", "KEN02", "TAM05", "TAM06", "NVX"]
 #sites=["BAN", "FNS", "K34", "K67", "K77", "K83", "PDG", "RJA", "CAX04", "CAX06", "KEN01", "KEN02", "TAM05", "TAM06", "NVX"]
 
 # TRMM, MSWEP
@@ -53,14 +53,14 @@ sites=["BAN"]
 precip_data="MSWEP"
 
 # Met data can be local (LBA, GEM) or global (CRUJRA)
-met_data="global"
+met_data="local"
 
 # model simulation type
 # MET-LOCAL: LBA or GEM met data is used to drive the model.
 # MET-GLOBAL: CRUJRA met data is used to drive the model.
 # LAI: Model runs in which lai is prescribed. Local data used.
 # STHUF: Model runs in which soil moisture (sthuf) is prescribed. Local data used. 
-sim_type="MET-GLOBAL"
+sim_type="MET-LOCAL"
 
 # specifies output folders
 output_type={"MET-GLOBAL": "CRUJRA", "LAI": "PRESC_LAI", "STHUF": "PRESC_STHUF"}
@@ -218,17 +218,25 @@ def write2netCDF(moutput, site, outfilename, tres):
 
 	# extract overlapping data from runs using local and global met data
 	if tres=="daily" and sim_type=="MET-GLOBAL":
+		syear_global = dt.date(1921,1,1)
+		times = [datetime.datetime.combine(syear_global, datetime.time()) + datetime.timedelta(days=day) for day in range(35405)]
+
+		start_ind = times.index(datetime.datetime.combine(site_dates[site][0], datetime.time()))
+		
+		time.units = 'days since 1850-01-01 00:00:00.0'
+		time.calendar = 'gregorian'
+		times_updated = times[start_ind:start_ind+site_dates[site][1]+1]
+		time[:] = date2num(times_updated, time.units, calendar=time.calendar)
 
 
-
-	elif tres=="hourly" and :
-		# add values to time variable
-		times = [datetime.datetime.combine(site_dates[site][0], datetime.time()) + datetime.timedelta(hours=hour) for hour in range(site_dates[site][1]*24)]
+	elif tres=="daily" and sim_type=="MET-LOCAL":
+		times = [datetime.datetime.combine(site_dates[site][0], datetime.time()) + datetime.timedelta(days=day) for day in range(site_dates[site][1])]
  	 
-	    	time.units = 'hours since 1850-01-01 00:00:00.0'
-	    	time.calendar = 'gregorian'
+	    	time.units = 'days since 1850-01-01 00:00:00.0'
+		time.calendar = 'gregorian'
+		time[:] = date2num(times, time.units, calendar=time.calendar)
 
-	time[:] = date2num(times, time.units, calendar=time.calendar)
+	
 
 	print "Writing data to file for "+str(len(lats))+" point(s)"
 
@@ -307,13 +315,21 @@ def write2netCDF(moutput, site, outfilename, tres):
 		print "Writing "+i+" data to file..."
 
 		if i=="sthu" or i=="sthf":
-			dataout[:,:,0,0] = moutput[i][:,:]
+
+			if tres=="daily" and sim_type=="MET-GLOBAL":
+				dataout[:,:,0,0] = moutput[i][start_ind:start_ind+site_dates[site][1]+1,:]
+			else:
+				dataout[:,:,0,0] = moutput[i][:,:]
 			
 			# min/max values
 			dataout.actual_min = np.min(dataout[:,:,0,0])
 			dataout.actual_max = np.max(dataout[:,:,0,0])			
 		else:
-			dataout[:,0,0] = moutput[i][:]
+
+			if tres=="daily" and sim_type=="MET-GLOBAL":
+				dataout[:,0,0] = moutput[i][start_ind:start_ind+site_dates[site][1]+1]
+			else:
+				dataout[:,0,0] = moutput[i][:]
 		
 			# min/max values
 			dataout.actual_min = np.min(dataout[:,0,0])

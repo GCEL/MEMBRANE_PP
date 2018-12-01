@@ -32,19 +32,45 @@ sites=["BAN","FNS","CAX","K34","K67","K77","K83","PDG","RJA"] # EDIT THIS, add s
 obs_data="lba"
 
 # site: [lat, lon]
-sitelocs = {"CAX04": [-1.716, -51.457], "CAX06": [-1.737, -51.462], "KEN01": [-16.016, -62.730], "KEN02": [-16.016, -62.730],
-"TAM05": [-12.831, -69.271], "TAM06": [-12.839, -69.296], "NVX": [-14.70, -52.35], "BAN": [-9.82, -50.15], "FNS": [-10.76, -62.36],
-"K34": [-2.61, -60.21], "K67": [-2.85, -54.97], "K77": [-3.01, -54.54], "K83": [-3.05, -54.93],
-"PDG": [-21.62, -47.63], "RJA": [-10.08, -62.36], "CAX": [-1.748, -51.454]}
+sitelocs = {
+"CAX04": [-1.716, -51.457],
+"CAX06": [-1.737, -51.462],
+"KEN01": [-16.016, -62.730],
+"KEN02": [-16.016, -62.730],
+"TAM05": [-12.831, -69.271],
+"TAM06": [-12.839, -69.296],
+"NVX": [-14.70, -52.35],
+"BAN": [-9.82, -50.15],
+"FNS": [-10.76, -62.36],
+"K34": [-2.61, -60.21],
+"K67": [-2.85, -54.97],
+"K77": [-3.01, -54.54],
+"K83": [-3.05, -54.93],
+"PDG": [-21.62, -47.63],
+"RJA": [-10.08, -62.36],
+"CAX": [-1.748, -51.454]}
 
 # Note on CAX - lat lon taken from the site info from the LCB dataset:
 # file:///exports/csce/datastore/geos/groups/gcel/MEMBRANE_database/FLUX_LBA_ECO/CD32_BRAZIL_FLUX_NETWORK_1174/guide/CD32_Brazil_Flux_Network.html
 
 # start date and number of daily time steps
-site_dates = {"BAN": [dt.date(2004, 1, 2), 1033], "FNS": [dt.date(1999, 1, 2), 1094], "K34": [dt.date(2003, 1, 2), 1017], "K67": [dt.date(2002, 1, 2), 685],\
-"K77": [dt.date(2001, 1, 2), 1824], "K83": [dt.date(2001, 1, 2), 952], "PDG": [dt.date(2002, 1, 2), 728], "RJA": [dt.date(2000, 2, 3), 953], "CAX": [dt.date(1999, 1 , 1), 731],\
-"CAX04": [dt.date(2005, 1, 1), 4383], "CAX06": [dt.date(2005, 1, 1), 4383], "KEN01": [dt.date(2005, 1, 1), 4383], "KEN02": [dt.date(2005, 1, 1), 4383],\
-"TAM05": [dt.date(2005, 1, 1), 4383], "TAM06": [dt.date(2005, 1, 1), 4383], "NVX": [dt.date(2005, 1, 1), 4383]}
+site_dates = {
+"BAN": [dt.date(2004, 1, 2), 1033],
+"FNS": [dt.date(1999, 1, 2), 1094],
+"K34": [dt.date(2003, 1, 2), 1017],
+"K67": [dt.date(2002, 1, 2), 685],
+"K77": [dt.date(2001, 1, 2), 1824],
+"K83": [dt.date(2001, 1, 2), 952],
+"PDG": [dt.date(2002, 1, 2), 728],
+"RJA": [dt.date(2000, 2, 3), 953],
+"CAX": [dt.date(1999, 1 , 1), 731],
+"CAX04": [dt.date(2005, 1, 1), 4383],
+"CAX06": [dt.date(2005, 1, 1), 4383],
+"KEN01": [dt.date(2005, 1, 1), 4383],
+"KEN02": [dt.date(2005, 1, 1), 4383],
+"TAM05": [dt.date(2005, 1, 1), 4383],
+"TAM06": [dt.date(2005, 1, 1), 4383],
+"NVX": [dt.date(2005, 1, 1), 4383]}
 
 # Note on CAX - additional dataset from met office only has one location, not CAX06 and CAX04
 
@@ -159,7 +185,11 @@ def write_lba_obs_netcdf(obs_output, site, outfilename):
     # For lba this is daily! (Not hourly)
     #times = [datetime.datetime.combine(site_dates[site][0], datetime.time()) + datetime.timedelta(hours=hour) for hour in range(site_dates[site][1]*24)]
  
-    times = [datetime.datetime.combine(site_dates[site][0], datetime.time()) + datetime.timedelta(days=day) for day in range(site_dates[site][1])]
+    #times = [datetime.date(site_dates[site][0] + datetime.timedelta(days=day) for day in range(site_dates[site][1])]
+
+    # For daily timeseries, you can do this:
+    times = [datetime.datetime.combine(site_dates_lba[site][0], datetime.time()) + datetime.timedelta(days=day) for day in range(site_dates_lba[site][1])]
+    #times = [dt.datetime.combine(dates[i], dt.time()) for i, date in enumerate(dates)]
 
     time.units = 'days since 1850-01-01 00:00:00.0'  # CHECK THIS MATCHES WHAT IS IN YOUR INPUT DATA!
     time.calendar = 'gregorian'
@@ -176,6 +206,9 @@ def write_lba_obs_netcdf(obs_output, site, outfilename):
             dataout.units = "g.m-2.d-1"
             dataout.long_name = "Gridbox GPP"
             dataout.title = "GPP_GB"
+        if in_var=="NEE_model": 
+            dataout.units = "g.m-2.d-1"
+            dataout.long_name = "Gridbox NEE"
         else:
             print "No data variables to write...? \n Check your netcdf file"
 
