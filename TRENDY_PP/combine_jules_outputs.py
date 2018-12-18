@@ -34,7 +34,7 @@ endmonth=12
 
 nmonths=216
 
-path2data="../MODEL_DATA/JULES-ES.1p0.vn5.1.500.CRUJRA1.365.S3.Monthly.2D"
+path2data="/exports/csce/datastore/geos/groups/gcel/MEMBRANE_database/TRENDY/MODEL_DATA/JULES-ES.1p0.vn5.1.500.CRUJRA1.365.S3.Monthly.2D"
 
 ##########################################################################################################
 def extract_data(modelvar):
