@@ -62,6 +62,7 @@ with netCDF4.Dataset(old_filename) as src, netCDF4.Dataset(new_filename, "w") as
     ids[np.where(np.logical_and(ids < 2, ids > -1))] = 0
 
     ids = np.ma.masked_values(ids,src_missing_val)
+    ids = ids.astype(np.int64)
 
     # Create the array of labels
     lbl = np.asarray(["Amazon"])
