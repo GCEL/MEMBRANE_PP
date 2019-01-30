@@ -54,17 +54,14 @@ with netCDF4.Dataset(old_filename) as src, netCDF4.Dataset(new_filename, "w") as
     print("The incoming missing_value is: ", src_missing_val)
     print(np.min(ids), np.max(ids))
 
-    ids[ids==src_missing_val] = miss
-   
-    # Very different results without this step?? 
-    ids = ids.astype(int) 
-
-    # Convert the ids to a masked array
-    ids = np.ma.masked_values(ids,miss)
-
     # Make sure the mask values match the ILAMB numbering system
     # i.e. 0, 1, 2, ...
-    ids[ids==1] = 0  # set the ones to zeros
+    #ids[ids==1] = 0  # set the ones to zero    # doesn't work because comparing floats/ints
+
+    # This is a bit hacky, but deals with the above issue
+    ids[np.where(np.logical_and(ids < 2, ids > -1))] = 0
+
+    ids = np.ma.masked_values(ids,src_missing_val)
 
     # Create the array of labels
     lbl = np.asarray(["Amazon"])
