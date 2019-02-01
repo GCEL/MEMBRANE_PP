@@ -5,8 +5,8 @@ import numpy as np
 
 mask_dir = "/exports/csce/datastore/geos/groups/gcel/MEMBRANE_database/ANCILLARY_NC_FILES/"
 
-old_filename = mask_dir + "mask-AM.nc"
-new_filename = mask_dir + "ilamb-mask-AM.nc"
+old_filename = mask_dir + "mask-CERRADO.nc"
+new_filename = mask_dir + "ilamb-mask-CERRADO.nc"
 
 print(old_filename)
 print(new_filename)
@@ -65,7 +65,7 @@ with netCDF4.Dataset(old_filename) as src, netCDF4.Dataset(new_filename, "w") as
     ids = ids.astype(np.int64)
 
     # Create the array of labels
-    lbl = np.asarray(["Amazon"])
+    lbl = np.asarray(["Cerrado"])
 
     # Create the relevant dimensions
     dst.createDimension("lat" ,size=lat.size)
